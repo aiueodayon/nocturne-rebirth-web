@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <script src="js/localforage.min.js"></script>
+    <script src="js/drive.js"></script>
+    <script src="js/dpad.js"></script>
+    <script src="gameasync/mapping.js"></script>
+
+    <title>MKXP</title>
+    <style>
+    	body {
+    	    margin: 0;
+    	    padding: 0;
+    	    background-color: black;
+    	    height: 100vh
+    	}
+        #main {
+            height: 100%;
+            width: 100%;
+        }
+
+        #canvas {
+      	    padding: 0;
+      	    margin: 0 auto;
+      	    display: block;
+      	    border: 0px none;
+      	    background-color: black;
+            height: 100%;
+            max-height: 100vh;
+            max-width: 100vw;
+        }
+
+        #spinner {
+            position: fixed;
+            bottom: 40px;
+            left: 20px;
+            opacity: 0.5;
+        }
+        .spinner {
+            height: 25px;
+            width: 25px;
+            margin: 0px auto;
+            -webkit-animation: rotation .8s linear infinite;
+            -moz-animation: rotation .8s linear infinite;
+            -o-animation: rotation .8s linear infinite;
+            animation: rotation 0.8s linear infinite;
+            border-left: 10px solid white;
+            border-right: 10px solid white;
+            border-bottom: 10px solid white;
+            border-top: 10px solid transparent;
+            border-radius: 100%;
+            background-color: transparent;
+        }
+
+        @-webkit-keyframes rotation {
+            from {-webkit-transform: rotate(0deg);}
+            to {-webkit-transform: rotate(360deg);}
+        }
+        @-moz-keyframes rotation {
+            from {-moz-transform: rotate(0deg);}
+            to {-moz-transform: rotate(360deg);}
+        }
+        @-o-keyframes rotation {
+            from {-o-transform: rotate(0deg);}
+            to {-o-transform: rotate(360deg);}
+        }
+        @keyframes rotation {
+            from {transform: rotate(0deg);}
+            to {transform: rotate(360deg);}
+        }
+
+        #fullscreen {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            opacity: 0.5;
+            cursor: pointer;
+        }
+        #fullscreen:hover {
+            opacity: 1;
+        }
+        #fullscreen > svg {
+            height: 20px;
+            width: 20px;
+        }
+
+        #progress {
+            background-color: white;
+            opacity: 0.6;
+            position: fixed;
+            bottom: 0; left: 0;
+            color: black;
+            padding: 3px 10px;
+            border-top-right-radius: 5px;
+        }
+
+        #dpad, #apad {
+            position: fixed;
+            bottom: 0; left: 0;
+            height: 30vh; max-height: 30vw;
+            width: 30vh; max-width: 30vw;
+            transform: translate(55%, -5%);
+        }
+
+        #apad {
+            right: 0; left: unset;
+            transform: unset;
+            width: 15vh; max-width: 15vw;
+        }
+
+        #dpad *, #apad * {
+            position: absolute;
+            height: 15vh; max-height: 15vw;
+            width: 15vh; max-width: 15vw;
+            background-color: gray;
+            opacity: 0.3;
+        }
+
+        #apad * {
+            border-radius: 50%;
+        }
+
+        #d-up { transform: translateY(-100%); }
+        #d-left { transform: translateX(-100%); }
+        #d-down { transform: translateY(100%); }
+        #d-right { transform: translateX(100%); }
+        #ap-b { transform: translate(-130%, 90%); }
+        #ap-c { transform: translate(-15%, -25%); }
+        #ap-a, #ap-ka {
+            height: 7vh; max-height: 7vw;
+            width: 7vh; max-width: 7vw;
+            top: 50%;
+            transform: translate(60%, -30%);
+        }
+        #ap-ka {
+            transform: translate(-20%, 70%);
+        }
+    </style>
+  </head>
+  <body>
+    <div id="main">
+        <div style="overflow:visible;" id="spinner">
+            <div class="spinner"></div>
+        </div>
+        <div id="progress">Loading ...</div>
+
+        <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1 width="640" height="480"></canvas>
+
+        <div id="dpad">
+            <div id="d-up"></div>
+            <div id="d-right"></div>
+            <div id="d-down"></div>
+            <div id="d-left"></div>
+            <div id="d-pl"></div>
+        </div>
+
+        <div id="apad">
+            <div id="ap-c"></div>
+            <div id="ap-b"></div>
+            <div id="ap-a"></div>
+            <div id="ap-ka"></div>
+        </div>
+    </div>
+
+    <div onclick="fullscreen()" id="fullscreen">
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">
+        <g>
+            <path fill="white" d="M947.4,9.8H707.6c-23.6,0-42.7,19.2-42.7,42.8l98.5,98.8L644.5,270.3c-11.9,11.9-17.9,27.5-17.9,43.1s6,31.2,17.9,43.1c23.8,23.8,62.4,23.8,86.3,0l118.7-118.7l97.9,98.3c23.6,0,42.6-19.2,42.6-42.8V52.5C990,29,971,9.8,947.4,9.8L947.4,9.8z"/>
+            <path fill="white" d="M947.2,664.7l-100.4,100l-121-121c-23.9-23.9-62.4-23.9-86.3,0c-23.8,23.8-23.8,62.4,0,86.2l121,120.9l-96.7,96.4c0,23.6,19.2,42.6,42.8,42.6h240.7c23.6,0,42.8-19,42.8-42.6V707.4C990,683.7,970.8,664.7,947.2,664.7L947.2,664.7z"/>
+            <path fill="white" d="M238.1,150.9L336.4,53c0-23.6-19.3-42.6-42.8-42.6H52.9c-23.6,0-42.8,19-42.8,42.6v239.7c0,23.6,19.2,42.7,42.8,42.7l98.9-98.4l122.1,122c11.9,12,27.5,17.9,43,17.9c15.7,0,31.2-6,43.2-17.9c23.7-23.7,23.7-62.4,0-86.1L238.1,150.9L238.1,150.9z"/>
+            <path fill="white" d="M312.1,602.7L151.5,763.3L52.7,664C29.2,664,10,683.2,10,706.8v240.7c0,23.6,19.2,42.8,42.7,42.8h239.8c23.5,0,42.6-19.2,42.6-42.8l-97.4-97.9l160.7-160.7c23.9-23.9,23.9-62.4,0-86.3C374.6,578.9,336,578.9,312.1,602.7L312.1,602.7z"/>
+        </g>
+        </svg>
+    </div>
+
+    <script type='text/javascript'>
+        var namespace = 'nocturne_rebirth';
+        var wTitle = '月夜に響くノクターン Rebirth'
+        document.title = wTitle;
+
+        var Module = {
+            preRun: [createDummies],
+            postRun: [loadFiles],
+            noAudioDecoding: true,
+            print: (function() {
+                return function(text) {
+                    console.log(text);
+                };
+            })(),
+            printErr: function(text) {
+                if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                console.error(text);
+            },
+            canvas: (function() {
+                var canvas = document.getElementById('canvas');
+                canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+
+                return canvas;
+            })(),
+            setStatus: function(text) {}
+        };
+
+        function fullscreen() {
+            document.getElementById('main').requestFullscreen();
+            screen.orientation.lock("landscape")
+        }
+
+        function preloadInit() {
+            // Load important files
+            preloadList([
+                'rgss.rb',
+                'data/scripts',
+                'data/actors',
+                'data/classes',
+                'data/skills',
+                'data/items',
+                'data/weapons',
+                'data/armors',
+                'data/enemies',
+                'data/troops',
+                'data/states',
+                'data/animations',
+                'data/tilesets',
+                'data/commonevents',
+                'data/system',
+                'data/mapinfos',
+            ]);
+        }
+
+const runtimeVer = (() => {
+    const v = new URLSearchParams(window.location.search).get('v');
+    return v ? encodeURIComponent(v) : Date.now().toString(16);
+})();
+
+// Load wasm then initialize
+setTimeout(() => {
+    getLazyAsset('mkxp.wasm?v=' + runtimeVer, 'Game engine', () => {
+                const s = document.createElement('script');
+                s.setAttribute('src', 'mkxp.js?v=' + runtimeVer);
+                document.body.appendChild(s);
+
+                getLazyAsset('gameasync/bitmap-map.js?v=' + runtimeVer, 'Primary assets', () => {
+                    const s = document.createElement('script');
+                    s.setAttribute('src', 'gameasync/bitmap-map.js?v=' + runtimeVer);
+                    document.body.appendChild(s);
+                });
+            });
+        }, 200);
+        var bitmapSizeMapping = {};
+
+        if (!is_touch_device()) {
+            document.getElementById('dpad').style.display = 'none';
+            document.getElementById('apad').style.display = 'none';
+        }
+
+        // Add all bindings
+        bindKey('d-up', 38);
+        bindKey('d-right', 39);
+        bindKey('d-down', 40);
+        bindKey('d-left', 37);
+        bindKey('ap-c', 67);
+        bindKey('ap-b', 88);
+        bindKey('ap-a', 90);
+        bindKey('ap-ka', 65);
+
+        resize();
+    </script>
+
+    <!-- <script async type="text/javascript" src="mkxp.js"></script> -->
+  </body>
+</html>
+
+

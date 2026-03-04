@@ -1,0 +1,7 @@
+{
+    "name": "Knight Blade",
+    "short_name": "KN_E",
+    "description": "Sample RPG XP game",
+    "display": "fullscreen",
+    "scope": "/"
+}
